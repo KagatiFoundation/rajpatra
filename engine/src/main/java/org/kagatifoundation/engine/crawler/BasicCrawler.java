@@ -7,12 +7,15 @@ import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.jspecify.annotations.NonNull;
 import org.kagatifoundation.engine.document.DocumentMetadata;
 import org.kagatifoundation.engine.observer.Observer;
 import org.kagatifoundation.engine.subject.Subject;
+
+import com.microsoft.playwright.ElementHandle;
+import com.microsoft.playwright.Page;
 
 public class BasicCrawler implements Subject {
     private ArrayList<Observer> observers = new ArrayList<>();
@@ -47,27 +50,27 @@ public class BasicCrawler implements Subject {
                 lock.unlock();
             }
 
-            List<CompletableFuture<DocumentMetadata>> futures = searchBatch
-                .stream()
-                .map(link -> CompletableFuture.supplyAsync(() -> {
-                    var content = crawlLink(link);
-                    var nextBatch = prepareLinksForNextBatch(content);
+            searchBatch.forEach(link -> {
+                if (link == null) return;
+                var page = this.crawlLink(link);
+                if (page != null) {
+                    var nextBatch = this.prepareLinksForNextBatch(page);
                     this.linksToCrawl.addAll(nextBatch);
 
-                    var meta = new DocumentMetadata(content, link);
-                    notifyObservers(meta);
-                    return meta;
-                }))
-                .toList();
-
-            futures.forEach(CompletableFuture::join);
+                    var meta = new DocumentMetadata(page.title(), link);
+                    this.notifyObservers(meta);
+                    PlaywrightPageFetcher.closePage(page);
+                }
+            });
             searchDepth += 1;
         }
+        // after the depth has been reached
+        PlaywrightPageFetcher.shutdown();
     }
 
-    private String crawlLink(String link) {
+    private Page crawlLink(@NonNull String link) {
         try {
-            var html = HtmlFetcher.fetch(link);
+            var html = PlaywrightPageFetcher.fetchPage(link);
             return html;
         }
         catch (Exception e) {
@@ -76,9 +79,20 @@ public class BasicCrawler implements Subject {
         }
     }
 
-    private List<String> prepareLinksForNextBatch(String html) {
-        var nextLinks = new ArrayList<String>();
-        return nextLinks;
+    private List<String> prepareLinksForNextBatch(Page page) {
+        if (page == null) {
+            return new ArrayList<>();
+        }
+        var links = new ArrayList<String>();
+        List<ElementHandle> elements = page.querySelectorAll("a");
+        for (ElementHandle anchor: elements) {
+            String href = anchor.getAttribute("href");
+            if (href != null && !href.isBlank()) {
+                String absPath = href.contains("://") ? href : page.url() + href;
+                links.add(absPath);
+            }
+        }
+        return links;
     }
 
     public CrawlerOptions getCrawlerOptions() {
