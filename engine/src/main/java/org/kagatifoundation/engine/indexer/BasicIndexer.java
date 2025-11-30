@@ -34,10 +34,11 @@ public class BasicIndexer implements NewHtmlDocumentObserver, AutoCloseable {
         try {
             Document luceneDocument = new Document();
             luceneDocument.add(new TextField("title", document.getTitle(), Store.YES));
+            luceneDocument.add(new TextField("url", document.getUrl(), Store.YES));
             writer.addDocument(luceneDocument);
         }
         catch (IOException ioe) {
-            ioe.printStackTrace();
+            System.err.printf("Couldn't index '%s'\n", document.getUrl());
         }
     }
 

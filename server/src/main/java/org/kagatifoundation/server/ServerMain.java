@@ -9,7 +9,7 @@ import org.kagatifoundation.engine.indexer.BasicIndexer;
 
 public class ServerMain {
     public static void main(String[] args) {
-        var crawler = new BasicCrawler(new CrawlerOptions("https://www.python.org/doc/", 1, false));
+        var crawler = new BasicCrawler(new CrawlerOptions("https://nepalpassport.gov.np/", 1, false));
         crawler.registerObserver(new HtmlDocumentValidator());
         try(BasicIndexer indexer = new BasicIndexer(Path.of("/Users/rigelstar/Desktop/KagatiFoundation/rajpatra-data-storage"))) {
             crawler.registerObserver(indexer);

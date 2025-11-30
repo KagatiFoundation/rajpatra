@@ -69,7 +69,7 @@ public class BasicCrawler implements Subject {
                     }
                 }
                 catch (Exception e) {
-                    e.printStackTrace();
+                    System.err.println("crawlTask failed");
                 }
             }
 
@@ -95,7 +95,7 @@ public class BasicCrawler implements Subject {
             }
         }
         catch (Exception e) {
-            e.printStackTrace();
+            System.err.printf("Couldn't fetch '%s'\n", link);
             return null;
         }
         return null;

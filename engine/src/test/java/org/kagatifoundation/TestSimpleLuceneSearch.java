@@ -19,7 +19,7 @@ import org.junit.Test;
 public class TestSimpleLuceneSearch {
     @Test
     public void testSearchInLuceneUsingSomeRandomText() {
-        String text = "Documentation";
+        String text = "national id";
         try {
             Directory directory = FSDirectory.open(Path.of("/Users/rigelstar/Desktop/KagatiFoundation/rajpatra-data-storage"));
             IndexReader reader = DirectoryReader.open(directory);

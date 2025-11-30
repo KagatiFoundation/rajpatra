@@ -32,7 +32,7 @@ public class PlaywrightPageFetcher {
             try {
                 context.close();
             } catch (Exception e) {
-                e.printStackTrace();
+                System.err.println("Couldn't close PageSession");
             } finally {
                 PlaywrightPageFetcher.releaseWrapper(wrapper);
             }

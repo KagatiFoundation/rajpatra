@@ -1,5 +1,7 @@
 package org.kagatifoundation.engine.document;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,11 +29,26 @@ class HtmlDocumentBuilder {
     protected HtmlDocumentBuilder parseAnchorTags() {
         var links = new ArrayList<String>();
         List<ElementHandle> elements = page.querySelectorAll("a");
+        String baseUrl = page.url();
+
         for (ElementHandle anchor: elements) {
             String href = anchor.getAttribute("href");
-            if (href != null && !href.isBlank()) {
-                String absPath = href.contains("://") ? href : page.url() + href;
-                links.add(absPath);
+            if (href != null) {
+                href = href.strip();
+                if (href.isEmpty()) continue;
+
+                try {
+                    URI hrefUri = new URI(href);
+                    if (hrefUri.isAbsolute()) {
+                        links.add(hrefUri.toString());
+                    } else {
+                        URI baseUri = new URI(baseUrl);
+                        URI resolved = baseUri.resolve(hrefUri);
+                        links.add(resolved.toString());
+                    }
+                } catch (URISyntaxException e) {
+                    System.err.println("Invalid href: " + href + " on page " + baseUrl);
+                }
             }
         }
         anchorsTags = links;
