@@ -9,40 +9,54 @@ import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Playwright;
 
 public class BrowserPool {
-    private final List<Browser> browsers = new ArrayList<>();
+    public static record BrowserWrapper(Playwright playwright, Browser browser) {}
+
+    private final List<BrowserWrapper> pool = new ArrayList<>();
     private final Semaphore semaphore;
 
     public BrowserPool(int poolSize) {
-        Playwright playwright = Playwright.create();
         semaphore = new Semaphore(poolSize);
 
         for (int i = 0; i < poolSize; i++) {
-            Browser browser = playwright.chromium().launch(
-                new BrowserType.LaunchOptions()
-                    .setHeadless(true)
-                    .setArgs(List.of("--no-sandbox", "--disable-dev-shm-usage"))
+            Playwright pw = Playwright.create();
+            Browser browser = pw.chromium().launch(
+                    new BrowserType.LaunchOptions()
+                            .setHeadless(true)
+                            .setArgs(List.of("--no-sandbox", "--disable-dev-shm-usage"))
             );
-            browsers.add(browser);
-        }
-    }    
-
-    public Browser acquire() throws InterruptedException {
-        semaphore.acquire();
-        synchronized (browsers) {
-            return browsers.removeFirst();
+            pool.add(new BrowserWrapper(pw, browser));
         }
     }
 
-    public void release(Browser browser) {
-        synchronized (browsers) {
-            browsers.add(browser);
+    public BrowserWrapper acquire() throws InterruptedException {
+        semaphore.acquire();
+        synchronized (pool) {
+            return pool.remove(0);
+        }
+    }
+
+    public void release(BrowserWrapper wrapper) {
+        synchronized (pool) {
+            pool.add(wrapper);
         }
         semaphore.release();
     }
 
     public void shutdown() {
-        for (Browser b: browsers) {
-            b.close();
+        synchronized (pool) {
+            for (BrowserWrapper wrapper : pool) {
+                try {
+                    wrapper.browser.close();
+                } catch (Exception e) {
+                    System.err.println("Failed to close browser: " + e.getMessage());
+                }
+                try {
+                    wrapper.playwright.close();
+                } catch (Exception e) {
+                    System.err.println("Failed to close Playwright: " + e.getMessage());
+                }
+            }
+            pool.clear();
         }
     }
 }

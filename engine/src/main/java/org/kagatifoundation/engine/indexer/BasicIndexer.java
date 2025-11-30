@@ -11,7 +11,7 @@ import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.SimpleFSDirectory;
+import org.apache.lucene.store.FSDirectory;
 
 import org.kagatifoundation.engine.document.HtmlDocument;
 import org.kagatifoundation.engine.document.NewHtmlDocumentObserver;
@@ -22,7 +22,7 @@ public class BasicIndexer implements NewHtmlDocumentObserver, AutoCloseable {
     private final IndexWriter writer;
 
     public BasicIndexer(Path storagePath) throws IOException {
-        this.directory = new SimpleFSDirectory(storagePath);
+        this.directory = FSDirectory.open(storagePath);
         this.analyzer = new StandardAnalyzer();
         IndexWriterConfig config = new IndexWriterConfig(analyzer);
         this.writer = new IndexWriter(directory, config);
@@ -30,6 +30,7 @@ public class BasicIndexer implements NewHtmlDocumentObserver, AutoCloseable {
 
     @Override
     public void update(HtmlDocument document) {
+        System.err.println("Indexing: " + document.getTitle());
         try {
             Document luceneDocument = new Document();
             luceneDocument.add(new TextField("title", document.getTitle(), Store.YES));

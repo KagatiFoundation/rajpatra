@@ -63,7 +63,10 @@ public class BasicCrawler implements Subject {
             for (Future<HtmlDocument> crawlTask: crawlTasks) {
                 try {
                     HtmlDocument htmlDocument = crawlTask.get();
-                    notifyObservers(htmlDocument);
+                    if (htmlDocument != null) {
+                        linksToCrawl.addAll(htmlDocument.getAnchorsTags());
+                        notifyObservers(htmlDocument);
+                    }
                 }
                 catch (Exception e) {
                     e.printStackTrace();
@@ -85,11 +88,9 @@ public class BasicCrawler implements Subject {
     }
 
     private HtmlDocument crawlLink(@NonNull String link) {
-        try {
-            var pwPage = PlaywrightPageFetcher.fetchPage(link);
-            if (pwPage != null) {
-                var htmlDocument = PlaywrightPageToHtmlDocumentAdapter.toHtmlDocument(pwPage);
-                PlaywrightPageFetcher.closePage(pwPage);
+        try (var pageSession = PlaywrightPageFetcher.fetchPage(link)) {
+            if (pageSession != null && pageSession.page() != null) {
+                var htmlDocument = PlaywrightPageToHtmlDocumentAdapter.toHtmlDocument(pageSession.page());
                 return htmlDocument;
             }
         }

@@ -10,7 +10,9 @@ dependencies {
     testImplementation libs.junit
     implementation libs.guava
     implementation "com.microsoft.playwright:playwright:1.47.0"
-    implementation "org.apache.lucene:lucene-core:7.3.0"
+    implementation "org.apache.lucene:lucene-core:10.3.2"
+    implementation "org.apache.lucene:lucene-queryparser:10.3.2"
+    implementation "org.apache.lucene:lucene-analyzers-common:8.11.4"
 }
 
 java {
