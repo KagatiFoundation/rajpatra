@@ -1,30 +1,23 @@
 package org.kagatifoundation.engine.crawler;
 
-import java.util.Arrays;
-
 import org.jspecify.annotations.NonNull;
+import org.kagatifoundation.engine.browser.BrowserPool;
 
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
-import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Page;
-import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.options.WaitUntilState;
 
 public class PlaywrightPageFetcher {
-    private static final Playwright PLAYWRIGHT;
-    private static final Browser BROWSER;
+    /*
+    Standard browser pool size for Rajpatra.
+    */
+    public static final int BROWSER_POOL_SIZE = 4;
 
-    static {
-        PLAYWRIGHT = Playwright.create();
-        BROWSER = PLAYWRIGHT.chromium().launch(
-            new BrowserType.LaunchOptions()
-                .setHeadless(true)
-                .setArgs(Arrays.asList("--no-sandbox", "--disable-dev-shm-usage"))
-        );
-    } 
+    private static final BrowserPool browserPool = new BrowserPool(BROWSER_POOL_SIZE);
 
     public static Page fetchPage(@NonNull String urlToFetch) throws Exception {
+        Browser browser = browserPool.acquire();
         Browser.NewContextOptions ctxOptions = new Browser.NewContextOptions()
             .setUserAgent(
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
@@ -33,9 +26,10 @@ public class PlaywrightPageFetcher {
             .setViewportSize(1280, 800)
             .setIgnoreHTTPSErrors(true);
 
-        BrowserContext ctx = BROWSER.newContext(ctxOptions);
+        BrowserContext ctx = browser.newContext(ctxOptions);
         Page page = ctx.newPage();
         page.navigate(urlToFetch, new Page.NavigateOptions().setWaitUntil(WaitUntilState.NETWORKIDLE));
+        browserPool.release(browser);
         return page;
     }
 
@@ -46,15 +40,11 @@ public class PlaywrightPageFetcher {
             ctx.close();
         }
         catch (Exception e) {
-            System.err.println(e.getMessage());
+            e.printStackTrace();
         }
     }
 
     public static void shutdown() {
-        try {
-            BROWSER.close();
-        } finally {
-            PLAYWRIGHT.close();
-        }
+        browserPool.shutdown();
     }
 }

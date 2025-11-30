@@ -5,17 +5,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.jspecify.annotations.NonNull;
-import org.kagatifoundation.engine.document.DocumentMetadata;
+import org.kagatifoundation.engine.document.HtmlDocument;
+import org.kagatifoundation.engine.document.PlaywrightPageToHtmlDocumentAdapter;
 import org.kagatifoundation.engine.observer.Observer;
 import org.kagatifoundation.engine.subject.Subject;
-
-import com.microsoft.playwright.ElementHandle;
-import com.microsoft.playwright.Page;
 
 public class BasicCrawler implements Subject {
     private ArrayList<Observer> observers = new ArrayList<>();
@@ -25,6 +25,8 @@ public class BasicCrawler implements Subject {
     private Set<String> visitedLinks = Collections.synchronizedSet(new HashSet<>());
 
     private ReentrantLock lock = new ReentrantLock();
+
+    private ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 
     public BasicCrawler(CrawlerOptions options) {
         this.options = options;
@@ -50,49 +52,52 @@ public class BasicCrawler implements Subject {
                 lock.unlock();
             }
 
-            searchBatch.forEach(link -> {
-                if (link == null) return;
-                var page = this.crawlLink(link);
-                if (page != null) {
-                    var nextBatch = this.prepareLinksForNextBatch(page);
-                    this.linksToCrawl.addAll(nextBatch);
-
-                    var meta = new DocumentMetadata(page.title(), link);
-                    this.notifyObservers(meta);
-                    PlaywrightPageFetcher.closePage(page);
+            var crawlTasks = new ArrayList<Future<HtmlDocument>>();
+            for (String linkToCrawl: searchBatch) {
+                if (linkToCrawl != null) {
+                    var crawlTask = createLinkCrawlingTask(linkToCrawl);
+                    crawlTasks.add(crawlTask);
                 }
-            });
+            }
+
+            for (Future<HtmlDocument> crawlTask: crawlTasks) {
+                try {
+                    HtmlDocument htmlDocument = crawlTask.get();
+                    notifyObservers(htmlDocument);
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
             searchDepth += 1;
         }
         // after the depth has been reached
         PlaywrightPageFetcher.shutdown();
     }
 
-    private Page crawlLink(@NonNull String link) {
-        try {
-            var html = PlaywrightPageFetcher.fetchPage(link);
-            return html;
-        }
-        catch (Exception e) {
-            System.err.println(e.getMessage());
-            return null;
-        }
+    private Future<HtmlDocument> createLinkCrawlingTask(@NonNull String link) {
+        Future<HtmlDocument> pageFetchTask = this.executor.submit(() -> {
+            var crawlTask = crawlLink(link);
+            return crawlTask;
+        });
+        return pageFetchTask;
     }
 
-    private List<String> prepareLinksForNextBatch(Page page) {
-        if (page == null) {
-            return new ArrayList<>();
-        }
-        var links = new ArrayList<String>();
-        List<ElementHandle> elements = page.querySelectorAll("a");
-        for (ElementHandle anchor: elements) {
-            String href = anchor.getAttribute("href");
-            if (href != null && !href.isBlank()) {
-                String absPath = href.contains("://") ? href : page.url() + href;
-                links.add(absPath);
+    private HtmlDocument crawlLink(@NonNull String link) {
+        try {
+            var pwPage = PlaywrightPageFetcher.fetchPage(link);
+            if (pwPage != null) {
+                var htmlDocument = PlaywrightPageToHtmlDocumentAdapter.toHtmlDocument(pwPage);
+                PlaywrightPageFetcher.closePage(pwPage);
+                return htmlDocument;
             }
         }
-        return links;
+        catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+        return null;
     }
 
     public CrawlerOptions getCrawlerOptions() {
@@ -110,10 +115,10 @@ public class BasicCrawler implements Subject {
     }
 
     @Override
-    public void notifyObservers(DocumentMetadata metadata) {
+    public void notifyObservers(HtmlDocument document) {
         for (Observer o: this.observers) {
             try {
-                o.update(metadata);
+                o.update(document);
             }
             catch (Exception e) {
                 System.out.println(e.getMessage());

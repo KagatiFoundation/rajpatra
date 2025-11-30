@@ -1,7 +1,7 @@
 package org.kagatifoundation.engine.observer;
 
-import org.kagatifoundation.engine.document.DocumentMetadata;
+import org.kagatifoundation.engine.document.HtmlDocument;
 
 public interface Observer {
-    void update(DocumentMetadata meta) throws Exception;
+    void update(HtmlDocument document) throws Exception;
 }
