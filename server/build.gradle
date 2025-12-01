@@ -10,6 +10,7 @@ dependencies {
     testImplementation libs.junit
     implementation libs.guava
     implementation project(':engine')
+    implementation 'io.javalin:javalin:6.7.0'
 }
 
 java {
