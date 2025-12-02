@@ -56,7 +56,7 @@ class HtmlDocumentBuilder {
     }
 
     public HtmlDocument build() {
-        var document = new HtmlDocument(page.title(), page.url(), new String());
+        var document = new HtmlDocument(page.title(), page.url(), page.content());
         document.setAnchorTags(this.anchorsTags);
         return document;
     }

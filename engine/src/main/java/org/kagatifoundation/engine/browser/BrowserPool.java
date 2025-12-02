@@ -9,10 +9,15 @@ import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Playwright;
 
 public class BrowserPool {
+    protected static final int BROWSER_POOL_SIZE = 4;
+
     public static record BrowserWrapper(Playwright playwright, Browser browser) {}
 
     private final List<BrowserWrapper> pool = new ArrayList<>();
     private final Semaphore semaphore;
+
+    // Count of currently active Playwright instances.
+    private static int activePlaywrightInstances = 0;
 
     public BrowserPool(int poolSize) {
         semaphore = new Semaphore(poolSize);

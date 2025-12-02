@@ -9,7 +9,6 @@ import io.javalin.Javalin;
 
 public class ServerLoop {
     private static final Logger LOG = Logger.getLogger(ServerLoop.class.getName());
-
     private static BasicIndexSearcher INDEX_SEARCHER;
 
     static {

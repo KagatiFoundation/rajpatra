@@ -5,26 +5,27 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.jspecify.annotations.NonNull;
 import org.kagatifoundation.engine.document.HtmlDocument;
-import org.kagatifoundation.engine.document.PlaywrightPageToHtmlDocumentAdapter;
 import org.kagatifoundation.engine.observer.Observer;
 import org.kagatifoundation.engine.subject.Subject;
 
 public class BasicCrawler implements Subject {
+    private final static Logger LOG = Logger.getLogger(BasicCrawler.class.getName());
+    
     private ArrayList<Observer> observers = new ArrayList<>();
     private final CrawlerOptions options;
 
     private Deque<String> linksToCrawl = new ArrayDeque<>();
     private Set<String> visitedLinks = Collections.synchronizedSet(new HashSet<>());
-
-    private ReentrantLock lock = new ReentrantLock();
 
     private ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 
@@ -33,72 +34,83 @@ public class BasicCrawler implements Subject {
     }
 
     public void crawl() {
-        this.linksToCrawl.add(this.options.seedUrl());
+        linksToCrawl.add(this.options.seedUrl());
         int searchDepth = 0;
 
         while (searchDepth <= this.options.maxDepth()) {
-            var searchBatch = new ArrayList<String>(); // links to crawl at once
-            lock.lock();
+            int batchSize = linksToCrawl.size();
+            if (batchSize == 0) break;
 
-            try {
-                while (!linksToCrawl.isEmpty()) {
-                    String nextLink = linksToCrawl.pollFirst();
-                    if (visitedLinks.add(nextLink)) {
-                        searchBatch.add(nextLink);
-                    }
-                }
-            }
-            finally {
-                lock.unlock();
-            }
-
-            var crawlTasks = new ArrayList<Future<HtmlDocument>>();
-            for (String linkToCrawl: searchBatch) {
-                if (linkToCrawl != null) {
-                    var crawlTask = createLinkCrawlingTask(linkToCrawl);
-                    crawlTasks.add(crawlTask);
+            var crawlTasks = new ArrayList<Future<Optional<HtmlDocument>>>();
+            for (int i = 0; i < batchSize; i++) {
+                String link = linksToCrawl.pollFirst();
+                if (visitedLinks.add(link)) {
+                    crawlTasks.add(createLinkCrawlingTask(link));
                 }
             }
 
-            for (Future<HtmlDocument> crawlTask: crawlTasks) {
+            for (Future<Optional<HtmlDocument>> crawlTask: crawlTasks) {
                 try {
-                    HtmlDocument htmlDocument = crawlTask.get();
-                    if (htmlDocument != null) {
-                        linksToCrawl.addAll(htmlDocument.getAnchorsTags());
-                        notifyObservers(htmlDocument);
+                    Optional<HtmlDocument> htmlDocument = crawlTask.get();
+                    if (htmlDocument.isPresent()) {
+                        HtmlDocument doc = htmlDocument.get();
+                        var anchorTags = doc.getAnchorsTags();
+                        if (anchorTags != null) {
+                            linksToCrawl.addAll(anchorTags);
+                        }
+                        notifyObservers(doc);
                     }
                 }
                 catch (Exception e) {
-                    System.err.println("crawlTask failed");
+                    e.printStackTrace();
+                    BasicCrawler.LOG.log(Level.WARNING, String.format("couldn't create task(%s)", e.getMessage()));
                 }
             }
-
             searchDepth += 1;
         }
-        // after the depth has been reached
+    }
+
+    public void shutdown() {
         PlaywrightPageFetcher.shutdown();
     }
 
-    private Future<HtmlDocument> createLinkCrawlingTask(@NonNull String link) {
-        Future<HtmlDocument> pageFetchTask = this.executor.submit(() -> {
-            var crawlTask = crawlLink(link);
-            return crawlTask;
+    private Future<Optional<HtmlDocument>> createLinkCrawlingTask(@NonNull String link) {
+        Future<Optional<HtmlDocument>> task = this.executor.submit(() -> {
+            var doc = crawlLink(link);
+            return doc;
         });
-        return pageFetchTask;
+        return task;
     }
 
-    private HtmlDocument crawlLink(@NonNull String link) {
-        try (var pageSession = PlaywrightPageFetcher.fetchPage(link)) {
-            if (pageSession != null && pageSession.page() != null) {
-                var htmlDocument = PlaywrightPageToHtmlDocumentAdapter.toHtmlDocument(pageSession.page());
-                return htmlDocument;
-            }
+    private Optional<HtmlDocument> crawlLink(@NonNull String link) {
+        // try {
+        //     var doc = crawlLinkUsingJsoup(link);
+        //     return Optional.of(doc);
+        // }
+        // catch (Exception e) {
+        //     BasicCrawler.LOG.log(Level.SEVERE, String.format("(JS) couldn't fetch '%s'", link));
+        // }
+        try {
+           var doc = crawlLinkUsingPlaywright(link);
+           return Optional.of(doc);
         }
         catch (Exception e) {
-            System.err.printf("Couldn't fetch '%s'\n", link);
-            return null;
+            e.printStackTrace();
+            BasicCrawler.LOG.log(Level.SEVERE, String.format("(PY) couldn't fetch '%s'", link));
         }
-        return null;
+        return Optional.empty();
+    }
+
+    private HtmlDocument crawlLinkUsingJsoup(@NonNull String link) throws Exception {
+        var jsoupFetcher = new JsoupPageFetcher();
+        var doc = jsoupFetcher.fetch(link);
+        return doc;
+    }
+
+    private HtmlDocument crawlLinkUsingPlaywright(@NonNull String link) throws Exception {
+        var pyFetcher = new PlaywrightPageFetcher();
+        var doc = pyFetcher.fetch(link);
+        return doc;
     }
 
     public CrawlerOptions getCrawlerOptions() {

@@ -10,6 +10,10 @@ public class HtmlDocument {
     private List<String> anchorTags;
     private String title;
     private String url;
+
+    /**
+     * Raw content fetched from page.
+     */
     private String content;
 
     public HtmlDocument(String title, String url, String content) {

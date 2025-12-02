@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.index.IndexWriter;
@@ -33,8 +34,12 @@ public class BasicIndexer implements NewHtmlDocumentObserver, AutoCloseable {
         System.err.println("Indexing: " + document.getTitle());
         try {
             Document luceneDocument = new Document();
-            luceneDocument.add(new TextField("title", document.getTitle(), Store.YES));
-            luceneDocument.add(new TextField("url", document.getUrl(), Store.YES));
+            TextField titleField = new TextField("title", document.getTitle(), Store.YES);
+            var contentField = new TextField("content", document.getContent(), Store.NO);
+            var urlField = new StringField("url", document.getUrl(), Store.YES);
+            luceneDocument.add(titleField);
+            luceneDocument.add(contentField);
+            luceneDocument.add(urlField);
             writer.addDocument(luceneDocument);
         }
         catch (IOException ioe) {

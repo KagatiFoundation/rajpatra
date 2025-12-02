@@ -2,13 +2,15 @@ package org.kagatifoundation.engine.crawler;
 
 import org.jspecify.annotations.NonNull;
 import org.kagatifoundation.engine.browser.BrowserPool;
+import org.kagatifoundation.engine.document.HtmlDocument;
+import org.kagatifoundation.engine.document.PlaywrightPageToHtmlDocumentAdapter;
 
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.WaitUntilState;
 
-public class PlaywrightPageFetcher {
+public class PlaywrightPageFetcher implements HtmlDocumentFetcher {
     /**
      * Represents a page.
      */
@@ -44,15 +46,36 @@ public class PlaywrightPageFetcher {
     */
     public static final int BROWSER_POOL_SIZE = 4;
 
-    private static final BrowserPool browserPool = new BrowserPool(BROWSER_POOL_SIZE);
+    private static BrowserPool browserPool;
 
-    public static PageSession fetchPage(@NonNull String urlToFetch) throws Exception {
+    private static void initBrowserPoolService() {
+        browserPool = new BrowserPool(BROWSER_POOL_SIZE);
+    }
+
+    @Override
+    public HtmlDocument fetch(String link) throws Exception {
+
+        try (var pageSession = fetchPage(link)) {
+            if (pageSession == null || pageSession.page() == null) {
+                throw new Exception();
+            }
+            var htmlDocument = PlaywrightPageToHtmlDocumentAdapter.toHtmlDocument(pageSession.page());
+            return htmlDocument;
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
+    private static PageSession fetchPage(@NonNull String urlToFetch) throws Exception {
+        if (browserPool == null) {
+            initBrowserPoolService();
+        }
+
         BrowserPool.BrowserWrapper browserWrapper = browserPool.acquire();
         Browser.NewContextOptions ctxOptions = new Browser.NewContextOptions()
-            .setUserAgent(
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-                "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
-            )
+            .setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36")
             .setViewportSize(1280, 800)
             .setIgnoreHTTPSErrors(true);
 
@@ -65,10 +88,14 @@ public class PlaywrightPageFetcher {
     }
 
     public static void releaseWrapper(BrowserPool.BrowserWrapper wrapper) {
-        browserPool.release(wrapper);
+        if (browserPool != null && wrapper != null) {
+            browserPool.release(wrapper);
+        }
     }
 
     public static void shutdown() {
-        browserPool.shutdown();
+        if (browserPool != null) {
+            browserPool.shutdown();
+        }
     }
 }
