@@ -11,4 +11,4 @@ plugins {
 }
 
 rootProject.name = 'rajpatra'
-include('engine', 'server', 'crawler')
+include('server', 'crawler')

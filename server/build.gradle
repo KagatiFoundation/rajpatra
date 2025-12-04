@@ -9,7 +9,6 @@ repositories {
 dependencies {
     testImplementation libs.junit
     implementation libs.guava
-    implementation project(':engine')
     implementation project(':crawler')
 }
 
