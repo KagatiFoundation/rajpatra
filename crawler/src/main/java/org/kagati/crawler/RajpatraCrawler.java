@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.kagati.crawler.html.HtmlDocument;
 import org.kagati.crawler.observer.FetchResultObserver;
 import org.kagati.crawler.subject.Subject;
@@ -15,8 +17,8 @@ import edu.uci.ics.crawler4j.url.WebURL;
 
 public class RajpatraCrawler extends WebCrawler implements Subject {
     private final List<FetchResultObserver> observers;
-
     private final static Pattern EXCLUSIONS = Pattern.compile(".*(\\.(css|js|xml|gif|jpg|png|mp3|mp4|zip|gz|pdf))$");
+    private static final Pattern DOMAIN_PATTERN = Pattern.compile("^https?://([a-z0-9-]+\\.)*gov\\.np(/.*)?", Pattern.CASE_INSENSITIVE);
 
     public RajpatraCrawler() {
         observers = new ArrayList<>();
@@ -25,8 +27,8 @@ public class RajpatraCrawler extends WebCrawler implements Subject {
     @Override
     public boolean shouldVisit(Page referringPage, WebURL url) {
         String urlString = url.getURL().toLowerCase();
-        return !EXCLUSIONS.matcher(urlString).matches() 
-            && urlString.startsWith("https://mofa.gov.np/");
+        return DOMAIN_PATTERN.matcher(urlString).matches()
+            && !EXCLUSIONS.matcher(urlString).matches();
     } 
 
     @Override
@@ -35,7 +37,8 @@ public class RajpatraCrawler extends WebCrawler implements Subject {
         if (page.getParseData() instanceof HtmlParseData) {
             HtmlParseData data = (HtmlParseData) page.getParseData();
             String title = data.getTitle();
-            var html = new HtmlDocument(title, url);
+            Document jsoupDocument = Jsoup.parse(data.getHtml());
+            var html = new HtmlDocument(title, url, jsoupDocument.text());
             notifyObservers(html);
         }
     }

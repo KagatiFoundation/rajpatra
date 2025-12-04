@@ -12,7 +12,7 @@ public class ServerLoop {
         RajpatraCrawlerConfig config = new RajpatraCrawlerConfig(
             4, 
             1,
-            new String[] { "https://python.org" }, 
+            new String[] { "https://nepalpassport.gov.np", "https://mofa.gov.np" }, 
             "src/test/resources/rajpatra-crawler"
         );
 

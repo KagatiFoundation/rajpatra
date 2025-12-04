@@ -25,8 +25,8 @@ public class CrawlerRuntime {
         cConfig.setMaxDepthOfCrawling(config.maxDepth());
         cConfig.setPolitenessDelay(500);
         cConfig.setUserAgentString("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36");
-        cConfig.setMaxPagesToFetch(1000);
-        cConfig.setMaxOutgoingLinksToFollow(100);
+        cConfig.setMaxPagesToFetch(500);
+        cConfig.setMaxOutgoingLinksToFollow(1000);
 
         PageFetcher pageFetcher = new PageFetcher(cConfig);
         RobotstxtConfig robotstxtConfig = new RobotstxtConfig();

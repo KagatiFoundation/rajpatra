@@ -35,7 +35,7 @@ public class RajpatraIndexer implements NewHtmlPageObserver, AutoCloseable {
         try {
             Document luceneDocument = new Document();
             TextField titleField = new TextField("title", document.title, Store.YES);
-            var contentField = new TextField("content", document.title, Store.NO);
+            var contentField = new TextField("content", document.content, Store.NO);
             var urlField = new StringField("url", document.url, Store.YES);
             luceneDocument.add(titleField);
             luceneDocument.add(contentField);

@@ -12,7 +12,7 @@ public class ServerMain {
             else if (args[0].equals("search")) {
                 System.err.println("Searching...");
                 try(var searcher = new RajpatraSearcher(null)) {
-                    var result = searcher.searchByText("python");
+                    var result = searcher.searchByText("commission");
                     System.err.println(result);
                 }
                 catch (Exception e) {

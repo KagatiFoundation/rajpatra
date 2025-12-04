@@ -24,7 +24,7 @@ public class RajpatraSearcher implements AutoCloseable {
     private final StandardAnalyzer analyzer;
 
     public RajpatraSearcher(Path indexPath) throws Exception {
-        this.directory = FSDirectory.open(Path.of("/Users/rigelstar/Desktop/KagatiFoundation/rajpatra-data-storage"));
+        this.directory = FSDirectory.open(Path.of("src/test/resources/rajpatra-index-data"));
         this.indexReader = DirectoryReader.open(directory);
         IndexReader reader = DirectoryReader.open(directory);
         this.searcher = new IndexSearcher(reader);
@@ -38,7 +38,7 @@ public class RajpatraSearcher implements AutoCloseable {
             Query titleQuery = new QueryParser("title", analyzer).parse(text);
             Query contentQuery = new QueryParser("content", analyzer).parse(text);
             Query finalQuery = new BooleanQuery.Builder()
-                .add(new BoostQuery(titleQuery, 3.0f), BooleanClause.Occur.MUST)
+                .add(new BoostQuery(titleQuery, 3.0f), BooleanClause.Occur.SHOULD)
                 .add(new BoostQuery(contentQuery, 1.0f), BooleanClause.Occur.SHOULD)
                 .build();
 
