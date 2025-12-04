@@ -1,0 +1,23 @@
+plugins {
+    id 'java-library'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation libs.junit
+    implementation libs.guava
+    implementation 'edu.uci.ics:crawler4j:4.4.0' 
+    implementation 'com.sleepycat:je:18.3.12'
+    implementation "org.apache.lucene:lucene-core:10.3.2"
+    implementation "org.apache.lucene:lucene-queryparser:10.3.2"
+    implementation "org.apache.lucene:lucene-analyzers-common:8.11.4"
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}

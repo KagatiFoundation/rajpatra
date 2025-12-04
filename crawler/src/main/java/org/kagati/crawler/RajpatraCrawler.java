@@ -1,0 +1,59 @@
+package org.kagati.crawler;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
+
+import org.kagati.crawler.html.HtmlDocument;
+import org.kagati.crawler.observer.FetchResultObserver;
+import org.kagati.crawler.subject.Subject;
+
+import edu.uci.ics.crawler4j.crawler.Page;
+import edu.uci.ics.crawler4j.crawler.WebCrawler;
+import edu.uci.ics.crawler4j.parser.HtmlParseData;
+import edu.uci.ics.crawler4j.url.WebURL;
+
+public class RajpatraCrawler extends WebCrawler implements Subject {
+    private final List<FetchResultObserver> observers;
+
+    private final static Pattern EXCLUSIONS = Pattern.compile(".*(\\.(css|js|xml|gif|jpg|png|mp3|mp4|zip|gz|pdf))$");
+
+    public RajpatraCrawler() {
+        observers = new ArrayList<>();
+    }
+
+    @Override
+    public boolean shouldVisit(Page referringPage, WebURL url) {
+        String urlString = url.getURL().toLowerCase();
+        return !EXCLUSIONS.matcher(urlString).matches() 
+            && urlString.startsWith("https://mofa.gov.np/");
+    } 
+
+    @Override
+    public void visit(Page page) {
+        String url = page.getWebURL().getURL();
+        if (page.getParseData() instanceof HtmlParseData) {
+            HtmlParseData data = (HtmlParseData) page.getParseData();
+            String title = data.getTitle();
+            var html = new HtmlDocument(title, url);
+            notifyObservers(html);
+        }
+    }
+
+    @Override
+    public void registerObserver(FetchResultObserver o) {
+        observers.add(o);
+    }
+
+    @Override
+    public void removeObserver(FetchResultObserver o) {
+        observers.remove(o);
+    }
+
+    @Override
+    public void notifyObservers(FetchResult r) {
+        for (FetchResultObserver o: observers) {
+            o.update(r);
+        }
+    }
+}

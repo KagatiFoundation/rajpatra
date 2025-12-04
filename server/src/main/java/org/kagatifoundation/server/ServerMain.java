@@ -1,30 +1,27 @@
 package org.kagatifoundation.server;
 
-import java.nio.file.Path;
-
-import org.kagatifoundation.engine.crawler.CrawlerOptions;
-import org.kagatifoundation.engine.crawler.CrawlerRuntime;
-import org.kagatifoundation.engine.document.HtmlDocumentValidator;
-import org.kagatifoundation.engine.indexer.BasicIndexer;
+import org.kagati.crawler.search.RajpatraSearcher;
 
 public class ServerMain {
     public static void main(String[] args) {
-        // var crawlerRuntime = new CrawlerRuntime(new CrawlerOptions("https://python.org/", 1, false));
-        var crawlerRuntime = new CrawlerRuntime(new CrawlerOptions("https://nepalpassport.gov.np/", 0, false));
-        crawlerRuntime.crawler().registerObserver(new HtmlDocumentValidator());
-        try(BasicIndexer indexer = new BasicIndexer(Path.of("/Users/rigelstar/Desktop/KagatiFoundation/rajpatra-data-storage"))) {
-            crawlerRuntime.crawler().registerObserver(indexer);
-            crawlerRuntime.start();
+        if (args.length > 0) {
+            if (args[0].equals("index")) {
+                System.err.println("Indexing...");
+                ServerLoop.start();
+            }
+            else if (args[0].equals("search")) {
+                System.err.println("Searching...");
+                try(var searcher = new RajpatraSearcher(null)) {
+                    var result = searcher.searchByText("python");
+                    System.err.println(result);
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
         }
-        catch (Exception ioe) {
-            ioe.printStackTrace();
+        else {
+            System.err.println("Nothing! Bye!");
         }
-        finally {
-            crawlerRuntime.shutdown();
-        }
-    }
-
-    public static void main2(String[] args) {
-        var serverLoop = new ServerLoop();
     }
 }
