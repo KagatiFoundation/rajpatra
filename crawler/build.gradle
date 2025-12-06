@@ -11,10 +11,12 @@ dependencies {
     implementation libs.guava
     implementation 'edu.uci.ics:crawler4j:4.4.0' 
     implementation 'com.sleepycat:je:18.3.12'
-    implementation "org.jsoup:jsoup:1.21.2"
-    implementation "org.apache.lucene:lucene-core:10.3.2"
-    implementation "org.apache.lucene:lucene-queryparser:10.3.2"
-    implementation "org.apache.lucene:lucene-analyzers-common:8.11.4"
+    implementation 'org.jsoup:jsoup:1.21.2'
+    implementation 'org.apache.lucene:lucene-core:10.3.2'
+    implementation 'org.apache.lucene:lucene-queryparser:10.3.2'
+    implementation 'org.apache.lucene:lucene-analyzers-common:8.11.4'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.20.1'
+    implementation 'org.xerial:sqlite-jdbc:3.51.1.0'
 }
 
 java {

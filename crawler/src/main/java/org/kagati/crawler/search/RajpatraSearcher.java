@@ -13,6 +13,10 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.document.Document;
@@ -32,8 +36,9 @@ public class RajpatraSearcher implements AutoCloseable {
     }
 
     public String searchByText(String text) {
-        StringBuilder resultBuilder = new StringBuilder();
-        resultBuilder.append("{");
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode rootObject = objectMapper.createObjectNode();
+
         try {
             Query titleQuery = new QueryParser("title", analyzer).parse(text);
             Query contentQuery = new QueryParser("content", analyzer).parse(text);
@@ -49,14 +54,13 @@ public class RajpatraSearcher implements AutoCloseable {
                 Document document = searcher.storedFields().document(sd.doc);
                 String title = document.get("title");
                 String url = document.get("url");
-                if (counter != 0) {
-                    resultBuilder.append(",");
-                }
-                resultBuilder.append(String.format("\"%d\": {\"title\": \"%s\", \"url\": \"%s\"}", counter, title, url));
+                ObjectNode item = objectMapper.createObjectNode();
+                item.put("title", title);
+                item.put("url", url);
+                rootObject.set(String.format("%d", counter), item);
                 counter += 1;
             }
-            resultBuilder.append("}");
-            return resultBuilder.toString();
+            return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(rootObject);
         }
         catch (Exception ioe) {
             ioe.printStackTrace();
