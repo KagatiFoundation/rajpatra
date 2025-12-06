@@ -12,7 +12,17 @@ public class ServerLoop {
         RajpatraCrawlerConfig config = new RajpatraCrawlerConfig(
             4, 
             1,
-            new String[] { "https://nepalpassport.gov.np", "https://mofa.gov.np" }, 
+            new String[] { 
+                // "https://www.moha.gov.np/", 
+                // "https://www.immigration.gov.np/", 
+                "https://opmcm.gov.np/",
+                "https://npc.gov.np/",
+                "https://nic.gov.np",
+                "https://supremecourt.gov.np/web/",
+                "https://nkp.gov.np/",
+                "https://na.parliament.gov.np/en",
+                "https://hr.parliament.gov.np/en"
+            }, 
             "src/test/resources/rajpatra-crawler"
         );
 

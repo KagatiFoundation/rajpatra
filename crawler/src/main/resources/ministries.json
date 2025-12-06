@@ -1,0 +1,70 @@
+{
+    "moha": {
+        "name": "Ministy of Home Affairs",
+        "domain": "moha.gov.np"
+    },
+    "mofa": {
+        "name": "Ministy of Foreign Affairs",
+        "domain": "mofa.gov.np"
+    },
+    "pass": {
+        "name": "Department of Passport",
+        "domain": "nepalpassport.gov.np"
+    },
+    "immi": {
+        "name": "Department of Immigration",
+        "domain": "immigration.gov.np"
+    },
+    "doe": {
+        "name": "Department of Education",
+        "domain": "doe.gov.np"
+    },
+    "moe": {
+        "name": "Ministry of Education",
+        "domain": "moe.gov.np"
+    },
+    "mopit": {
+        "name": "Ministry of Physical Infrastructure and Transport",
+        "domain": "mopit.gov.np"
+    },
+    "dorw": {
+        "name": "Department of Railways",
+        "domain": "dorw.gov.np"
+    },
+    "dor": {
+        "name": "Department of Roads",
+        "domain": "dor.gov.np"
+    },
+    "tourism": {
+        "name": "Ministry of Culture, Tourism and Civil Aviation",
+        "domain": "tourism.gov.np"
+    },
+    "opmcm": {
+        "name": "Office of Prime Minister and Council of Ministers",
+        "domain": "opmcm.gov.np"
+    },
+    "npc": {
+        "name": "National Planning Commission",
+        "domain": "npc.gov.np"
+    },
+    "nnrfc": {
+        "name": "National Natural Resources and Fiscal Commission",
+        "domain": "nnrfc.gov.np"
+    },
+    "nic": {
+        "name": "National Information Commission",
+        "domain": "nic.gov.np"
+    },
+    "nkp": {
+        "name": "Nepal Law Newspaper",
+        "domain": "nkp.gov.np"
+    },
+    "hr": {
+        "name": "House of Representatives",
+        "domain": "hr.parliament.gov.np"
+    },
+    "na": {
+        "name": "National Assembly",
+        "domain": "na.parliament.gov.np"
+    }
+}

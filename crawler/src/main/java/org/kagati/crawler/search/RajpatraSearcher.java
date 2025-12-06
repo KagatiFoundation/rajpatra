@@ -13,6 +13,8 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.kagati.crawler.consts.DepartmentAndMinistryNames;
+import org.kagati.crawler.consts.Ministry;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -33,6 +35,46 @@ public class RajpatraSearcher implements AutoCloseable {
         IndexReader reader = DirectoryReader.open(directory);
         this.searcher = new IndexSearcher(reader);
         this.analyzer = new StandardAnalyzer();
+    }
+
+    public String searchUsingTextAndDepartment(SearchQuery searchQuery) {
+        Ministry ministry = DepartmentAndMinistryNames.ALL_NAMES.get(searchQuery.ministry());
+        if (searchQuery.ministry().isEmpty() || searchQuery == null) {
+            return searchByText(searchQuery.query());
+        }
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode rootObject = objectMapper.createObjectNode();
+        try {
+            Query titleQuery = new QueryParser("title", analyzer).parse(searchQuery.query());
+            Query contentQuery = new QueryParser("content", analyzer).parse(searchQuery.query());
+            Query finalQuery = new BooleanQuery.Builder()
+                .add(new BoostQuery(titleQuery, 3.0f), BooleanClause.Occur.SHOULD)
+                .add(new BoostQuery(contentQuery, 1.0f), BooleanClause.Occur.SHOULD)
+                .build();
+
+            TopDocs results = searcher.search(finalQuery, 10); // top 10
+
+            var counter = 0;
+            for (ScoreDoc sd : results.scoreDocs) {
+                Document document = searcher.storedFields().document(sd.doc);
+                String title = document.get("title");
+                String url = document.get("url");
+                if (!url.contains(ministry.website().strip())) {
+                    continue;    
+                }
+                ObjectNode item = objectMapper.createObjectNode();
+                item.put("title", title);
+                item.put("url", url);
+                rootObject.set(String.format("%d", counter), item);
+                counter += 1;
+            }
+            return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(rootObject);
+        }
+        catch (Exception ioe) {
+            ioe.printStackTrace();
+            return null;
+        }
     }
 
     public String searchByText(String text) {

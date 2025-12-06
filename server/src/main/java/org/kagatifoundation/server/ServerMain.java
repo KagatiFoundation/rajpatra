@@ -3,6 +3,7 @@ package org.kagatifoundation.server;
 import java.nio.file.Path;
 
 import org.kagati.crawler.search.RajpatraSearcher;
+import org.kagati.crawler.search.SearchQuery;
 
 import io.javalin.Javalin;
 
@@ -17,6 +18,12 @@ public class ServerMain {
                 System.err.println("Searching...");
                 var searcher = new SearchLoop();
                 searcher.start();
+                try {
+                    searcher.close();
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
         System.err.println("Nothing! Bye!");
@@ -45,12 +52,12 @@ class SearchLoop implements AutoCloseable {
             })
             .get("/search", ctx -> {
                 String query = ctx.queryParam("q");
-                System.out.println("QUERY: " + query);
+                String depart = ctx.queryParam("m");
                 if (query == null) {
                     ctx.json("{}");
                 }
                 else {
-                    ctx.json(searchByText(query));
+                    ctx.json(searchByText(new SearchQuery(query, depart)));
                 }
             })
             .start(8080);
@@ -62,8 +69,8 @@ class SearchLoop implements AutoCloseable {
         searcher.close();
     }
 
-    public String searchByText(String text) {
+    public String searchByText(SearchQuery query) {
         if (searcher == null) return null;
-        return searcher.searchByText(text);
+        return searcher.searchUsingTextAndDepartment(query);
     }
 }

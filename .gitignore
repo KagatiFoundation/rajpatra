@@ -8,3 +8,4 @@
 **/*.csv
 **/*.lck
 **/*.0
+server/src/test/
