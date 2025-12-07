@@ -6,7 +6,6 @@ import java.util.regex.Pattern;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.kagati.crawler.html.HtmlDocument;
 import org.kagati.crawler.observer.FetchResultObserver;
 import org.kagati.crawler.subject.Subject;
 
@@ -36,10 +35,9 @@ public class RajpatraCrawler extends WebCrawler implements Subject {
         String url = page.getWebURL().getURL();
         if (page.getParseData() instanceof HtmlParseData) {
             HtmlParseData data = (HtmlParseData) page.getParseData();
-            String title = data.getTitle();
             Document jsoupDocument = Jsoup.parse(data.getHtml());
-            var html = new HtmlDocument(title, url, jsoupDocument.text());
-            notifyObservers(html);
+            var crawledData = new CrawledDocument(jsoupDocument, url);
+            notifyObservers(crawledData);
         }
     }
 
