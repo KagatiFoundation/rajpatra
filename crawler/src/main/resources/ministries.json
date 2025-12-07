@@ -1,70 +1,87 @@
-{
-    "moha": {
+[
+    {
+        "id": "moha",
         "name": "Ministy of Home Affairs",
         "domain": "moha.gov.np"
     },
-    "mofa": {
+    {
+        "id": "mofa",
         "name": "Ministy of Foreign Affairs",
         "domain": "mofa.gov.np"
     },
-    "pass": {
+    {
+        "id": "pass",
         "name": "Department of Passport",
         "domain": "nepalpassport.gov.np"
     },
-    "immi": {
+    {
+        "id": "immi",
         "name": "Department of Immigration",
         "domain": "immigration.gov.np"
     },
-    "doe": {
+    {
+        "id": "doe",
         "name": "Department of Education",
-        "domain": "doe.gov.np"
+                   "domain": "doe.gov.np"
     },
-    "moe": {
+    {
+        "id": "moe",
         "name": "Ministry of Education",
         "domain": "moe.gov.np"
     },
-    "mopit": {
+    {
+        "id": "mopit",
         "name": "Ministry of Physical Infrastructure and Transport",
         "domain": "mopit.gov.np"
     },
-    "dorw": {
+    {
+        "id": "dorw",
         "name": "Department of Railways",
         "domain": "dorw.gov.np"
     },
-    "dor": {
+    {
+        "id": "dor",
         "name": "Department of Roads",
         "domain": "dor.gov.np"
     },
-    "tourism": {
+    {
+        "id": "tourism",
         "name": "Ministry of Culture, Tourism and Civil Aviation",
         "domain": "tourism.gov.np"
     },
-    "opmcm": {
+    {
+        "id": "opmcm",
         "name": "Office of Prime Minister and Council of Ministers",
         "domain": "opmcm.gov.np"
     },
-    "npc": {
+    {
+        "id": "npc",
         "name": "National Planning Commission",
         "domain": "npc.gov.np"
     },
-    "nnrfc": {
+    {
+        "id": "nnrfc",
         "name": "National Natural Resources and Fiscal Commission",
         "domain": "nnrfc.gov.np"
     },
-    "nic": {
+    {
+        "id": "nic",
         "name": "National Information Commission",
         "domain": "nic.gov.np"
     },
-    "nkp": {
+    {
+        "id": "nkp",
         "name": "Nepal Law Newspaper",
         "domain": "nkp.gov.np"
     },
-    "hr": {
+    {
+        "id": "hr",
         "name": "House of Representatives",
         "domain": "hr.parliament.gov.np"
     },
-    "na": {
+    {
+        "id": "na",
         "name": "National Assembly",
         "domain": "na.parliament.gov.np"
     }
-}
+]
