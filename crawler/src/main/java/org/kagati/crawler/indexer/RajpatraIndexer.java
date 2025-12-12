@@ -8,6 +8,8 @@ import java.util.logging.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.DoubleDocValuesField;
+import org.apache.lucene.document.StoredField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.document.Field.Store;
@@ -43,17 +45,36 @@ public class RajpatraIndexer implements NewHtmlPageObserver, AutoCloseable {
         CrawledDocument document = (CrawledDocument) result;
         try {
             Document luceneDocument = new Document();
-            TextField titleField = new TextField("title", document.getTitle(), Store.YES);
-            var contentField = new TextField("content", document.getTitle(), Store.NO);
-            var urlField = new StringField("url", document.getUrl(), Store.YES);
-            luceneDocument.add(titleField);
-            luceneDocument.add(contentField);
-            luceneDocument.add(urlField);
+            luceneDocument.add(new TextField("title", document.getTitle(), Store.YES));
+            luceneDocument.add(new TextField("heading", document.getH1(), Store.YES));
+            luceneDocument.add(new TextField("main_conent", document.getMainBody(), Store.YES));
+            luceneDocument.add(new TextField("site_name", document.getOgSiteName(), Store.YES));
+
+            // url structure as searchable tokens
+            luceneDocument.add(new TextField("url_tokens", tokenizeUrl(document.getUrl()), Store.NO));
+            luceneDocument.add(new StringField("url", document.getUrl(), Store.YES));
+            luceneDocument.add(new StoredField("snippet", document.getSnippet()));
+            luceneDocument.add(new StoredField("image", document.getOgImage()));
+            luceneDocument.add(new StoredField("type", document.getOgType()));
+
+            double alpha = 0.25;
+            double depthBoost = 1.0 + alpha * Math.log1p(computeUrlDepth(document.getUrl()));
+            luceneDocument.add(new DoubleDocValuesField("url_depth", depthBoost));
             writer.addDocument(luceneDocument);
         }
         catch (IOException ioe) {
             System.err.printf("Couldn't index '%s'\n", document.getUrl());
         }
+    }
+
+    private String tokenizeUrl(String url) {
+        return url.replace("https://", "")
+            .replace("http://", "")
+            .replaceAll("[/_.-]", " ");
+    }
+
+    private double computeUrlDepth(String url) {
+        return url.chars().filter(c -> c == '/').count();
     }
 
     @Override

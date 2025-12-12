@@ -10,11 +10,12 @@ import java.util.stream.Collectors;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.queries.function.FunctionScoreQuery;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.Query;
 import org.apache.lucene.document.Document;
 
 import org.kagati.crawler.entity.Ministry;
@@ -81,26 +82,33 @@ public class RajpatraSearcher implements AutoCloseable {
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode rootObject = objectMapper.createObjectNode();
         try {
-            Query titleQuery = new QueryParser("title", analyzer).parse(searchQuery.query());
-            Query contentQuery = new QueryParser("content", analyzer).parse(searchQuery.query());
-            Query finalQuery = new BooleanQuery.Builder()
-                .add(new BoostQuery(titleQuery, 3.0f), BooleanClause.Occur.SHOULD)
-                .add(new BoostQuery(contentQuery, 1.0f), BooleanClause.Occur.SHOULD)
+            QueryParser qpTitle = new QueryParser("title", analyzer);
+            QueryParser qpHeading = new QueryParser("heading", analyzer);
+            QueryParser qpMainContent = new QueryParser("main_content", analyzer);
+
+            Query baseQuery = new BooleanQuery.Builder()
+                .add(new BoostQuery(qpTitle.parse(searchQuery.query()), 5.0f), BooleanClause.Occur.MUST)
+                .add(new BoostQuery(qpMainContent.parse(searchQuery.query()), 3f), BooleanClause.Occur.SHOULD)
+                .add(new BoostQuery(qpHeading.parse(searchQuery.query()), 2f), BooleanClause.Occur.SHOULD)
+                .add(new WildcardQuery(new Term("url", "*" + ministry.domain() + "*")), BooleanClause.Occur.FILTER)
                 .build();
 
-            TopDocs results = searcher.search(finalQuery, 10); // top 10
+            DoubleValuesSource depthScore = DoubleValuesSource.fromDoubleField("url_depth");
+            Query finalQuery = new FunctionScoreQuery(baseQuery, depthScore);
 
-            var counter = 0;
+            TopDocs results = searcher.search(finalQuery, 10); // top 10
+            int counter = 0;
             for (ScoreDoc sd : results.scoreDocs) {
                 Document document = searcher.storedFields().document(sd.doc);
                 String title = document.get("title");
                 String url = document.get("url");
-                if (!url.contains(ministry.domain().strip())) {
-                    continue;    
-                }
+                String snippet = document.get("snippet");
+                String image = document.get("image");
                 ObjectNode item = objectMapper.createObjectNode();
                 item.put("title", title);
                 item.put("url", url);
+                item.put("snippet", snippet);
+                item.put("image", image);
                 rootObject.set(String.format("%d", counter), item);
                 counter += 1;
             }
@@ -131,9 +139,13 @@ public class RajpatraSearcher implements AutoCloseable {
                 Document document = searcher.storedFields().document(sd.doc);
                 String title = document.get("title");
                 String url = document.get("url");
+                String snippet = document.get("snippet");
+                String image = document.get("image");
                 ObjectNode item = objectMapper.createObjectNode();
                 item.put("title", title);
                 item.put("url", url);
+                item.put("snippet", snippet);
+                item.put("image", image);
                 rootObject.set(String.format("%d", counter), item);
                 counter += 1;
             }

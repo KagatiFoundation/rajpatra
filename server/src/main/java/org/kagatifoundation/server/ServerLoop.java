@@ -13,8 +13,8 @@ public class ServerLoop {
             4, 
             1,
             new String[] { 
-                // "https://www.moha.gov.np/", 
-                // "https://www.immigration.gov.np/", 
+                "https://www.moha.gov.np/", 
+                "https://www.immigration.gov.np/", 
                 "https://opmcm.gov.np/",
                 "https://npc.gov.np/",
                 "https://nic.gov.np",
