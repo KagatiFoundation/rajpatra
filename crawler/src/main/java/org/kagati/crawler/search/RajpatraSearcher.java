@@ -88,8 +88,8 @@ public class RajpatraSearcher implements AutoCloseable {
 
             Query baseQuery = new BooleanQuery.Builder()
                 .add(new BoostQuery(qpTitle.parse(searchQuery.query()), 5.0f), BooleanClause.Occur.MUST)
-                .add(new BoostQuery(qpMainContent.parse(searchQuery.query()), 3f), BooleanClause.Occur.SHOULD)
-                .add(new BoostQuery(qpHeading.parse(searchQuery.query()), 2f), BooleanClause.Occur.SHOULD)
+                .add(new BoostQuery(qpHeading.parse(searchQuery.query()), 3f), BooleanClause.Occur.SHOULD)
+                .add(new BoostQuery(qpMainContent.parse(searchQuery.query()), 1f), BooleanClause.Occur.SHOULD) // Nepalese government portals barely contain any HTML content
                 .add(new WildcardQuery(new Term("url", "*" + ministry.domain() + "*")), BooleanClause.Occur.FILTER)
                 .build();
 
@@ -126,7 +126,7 @@ public class RajpatraSearcher implements AutoCloseable {
 
         try {
             Query titleQuery = new QueryParser("title", analyzer).parse(text);
-            Query contentQuery = new QueryParser("content", analyzer).parse(text);
+            Query contentQuery = new QueryParser("main_content", analyzer).parse(text);
             Query finalQuery = new BooleanQuery.Builder()
                 .add(new BoostQuery(titleQuery, 3.0f), BooleanClause.Occur.SHOULD)
                 .add(new BoostQuery(contentQuery, 1.0f), BooleanClause.Occur.SHOULD)

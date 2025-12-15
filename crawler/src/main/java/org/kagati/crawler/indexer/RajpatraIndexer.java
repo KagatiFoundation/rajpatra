@@ -43,11 +43,15 @@ public class RajpatraIndexer implements NewHtmlPageObserver, AutoCloseable {
         }
 
         CrawledDocument document = (CrawledDocument) result;
+        if (document.getMainBody().length() == 0) { // no need to index empty pages
+            return;
+        }
+
         try {
             Document luceneDocument = new Document();
             luceneDocument.add(new TextField("title", document.getTitle(), Store.YES));
             luceneDocument.add(new TextField("heading", document.getH1(), Store.YES));
-            luceneDocument.add(new TextField("main_conent", document.getMainBody(), Store.YES));
+            luceneDocument.add(new TextField("main_content", document.getMainBody(), Store.YES));
             luceneDocument.add(new TextField("site_name", document.getOgSiteName(), Store.YES));
 
             // url structure as searchable tokens

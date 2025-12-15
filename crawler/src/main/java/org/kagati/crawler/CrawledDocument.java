@@ -73,26 +73,72 @@ public class CrawledDocument implements FetchResult {
 
     public String getMainBody() {
         Element main = jsoupDocument.selectFirst("main");
-        if (main != null) {
-            return normalize(main.text());
-        }
+        if (main != null && main.text().length() > 100) return normalize(main.text());
 
-        Elements articles = jsoupDocument.select("article");
-        if (!articles.isEmpty()) {
-            return normalize(articles.text());
-        }
+        Elements candidates = jsoupDocument.select("body > div, body > section, article, td");
+        Element bestElement = null;
+        double bestScore = -1;
 
-        Elements divs = jsoupDocument.select("div[id*=content], div[class*=content], section[class*=body]");
-        if (!divs.isEmpty()) {
-            return normalize(divs.text());
+        for (Element el : candidates) {
+            double score = calculateTTR(el);
+            String className = (el.className() + " " + el.id()).toLowerCase();
+            if (className.contains("content") || className.contains("body")) {
+                score *= 1.3; 
+            }
+            if (score > bestScore) {
+                bestScore = score;
+                bestElement = el;
+            }
         }
-        return normalize(jsoupDocument.body().text());
+        if (bestElement != null) {
+            return normalize(bestElement.text());
+        }
+        return "";
     }
 
     private String normalize(String text) {
         if (text == null) return "";
         text = text.replaceAll("\\s+", " ").trim();
         return text;
+    }
+
+    /**
+     * Text-to-Tag Ratio (TTR) is a heuristic used to identify the main content block
+     * of an HTML page by measuring how much readable text is carried per unit of
+     * markup structure.
+     *
+     * Intuition:
+     * - Real content (articles, notices, acts, circulars) tends to have
+     *   long continuous text with relatively few HTML elements.
+     * - Boilerplate (menus, headers, footers, sidebars, navigation) tends to have
+     *   many HTML tags, links, and short repeated phrases.
+     *
+     * How it works:
+     * - textLength: number of visible characters in the element (semantic signal)
+     * - elementCount: number of descendant DOM elements (structural complexity)
+     * - linkCount: number of <a> tags (navigation indicator)
+     *
+     * A higher TTR means the element carries more meaning per unit of structure.
+     * Navigation-heavy blocks are penalized by subtracting a cost per link.
+     *
+     * This is a heuristic, not a guarantee:
+     * - Tables and lists may have lower TTR despite being meaningful
+     * - PDF-only pages may have low TTR in HTML
+     *
+     * Despite its simplicity, TTR works well for content-heavy sites (e.g.
+     * government portals) and significantly improves downstream ranking
+     * by reducing boilerplate noise before indexing.
+     */
+    private double calculateTTR(Element el) {
+        long tagCount = el.getAllElements().size();
+        int textLength = el.ownText().length();
+        int linkCount = el.select("a").size();
+
+        if (textLength < 50) return -1;
+        double ttr = (double) textLength / tagCount;
+
+        ttr -= linkCount * 2.0;
+        return ttr;
     }
 
     public String getKeywords() {

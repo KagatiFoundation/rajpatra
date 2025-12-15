@@ -36,7 +36,11 @@ public class RajpatraCrawler extends WebCrawler implements Subject {
         if (page.getParseData() instanceof HtmlParseData) {
             HtmlParseData data = (HtmlParseData) page.getParseData();
             Document jsoupDocument = Jsoup.parse(data.getHtml());
-            var crawledData = new CrawledDocument(jsoupDocument, url);
+            System.err.println("Found a new HTML page:");
+            CrawledDocument crawledData = new CrawledDocument(jsoupDocument, url);
+            System.err.println("Content: " + crawledData.getMainBody());
+            System.err.println("H1: " + crawledData.getH1());
+            System.err.println("Title: " + crawledData.getTitle());
             notifyObservers(crawledData);
         }
     }
